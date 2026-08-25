@@ -1,5 +1,4 @@
-namespace CarRental.Domain.Entities;
-
+namespace CarRentalSystem.Domain.Entities;
 public class Car
 {
     public int Id { get; set; }
