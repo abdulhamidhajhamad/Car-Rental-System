@@ -1,14 +1,13 @@
-public record RegisterDto(
+namespace CarRentalSystem.Application.DTOs.Profile;
+
+public record UpdateProfileDto(
     string FirstName,
     string LastName,
-    string Email,
-    string Password,
-    string PhoneNumber,
+    string? PhoneNumber,
     string DriversLicenseNumber,
     string AddressLine1,
     string? AddressLine2,
     string City,
     string Country,
-    DateTime? DateOfBirth,
-    string Role = "Customer"
+    DateTime? DateOfBirth
 );
