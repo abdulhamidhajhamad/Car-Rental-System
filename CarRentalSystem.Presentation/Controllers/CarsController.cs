@@ -1,3 +1,6 @@
+using CarRentalSystem.Application.DTOs.Car;
+using CarRentalSystem.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CarRentalSystem.Presentation.Controllers;
@@ -6,38 +9,61 @@ namespace CarRentalSystem.Presentation.Controllers;
 [ApiController]
 public class CarsController : ControllerBase
 {
-    [HttpGet]
-    public IActionResult GetAllCars()
+    private readonly ICarService _carService;
+
+    public CarsController(ICarService carService)
     {
-        // TODO: جلب جميع السيارات (مع إمكانية الفلترة)
-        return Ok(new { message = "Get all cars endpoint hit" });
+        _carService = carService;
     }
 
-    [HttpGet("{id}")]
-    public IActionResult GetCarById(int id)
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
     {
-        // TODO: جلب تفاصيل سيارة معينة
-        return Ok(new { message = $"Get car {id} endpoint hit" });
+        var cars = await _carService.GetAllAsync();
+        return Ok(cars);
+    }
+
+    [HttpGet("available")]
+    public async Task<IActionResult> GetAvailable()
+    {
+        var cars = await _carService.GetAvailableCarsAsync();
+        return Ok(cars);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var car = await _carService.GetByIdAsync(id);
+        if (car == null) return NotFound(new { Message = $"Car with ID {id} was not found." });
+
+        return Ok(car);
     }
 
     [HttpPost]
-    public IActionResult CreateCar()
+    [Authorize] 
+    public async Task<IActionResult> Create([FromBody] CreateCarDto dto)
     {
-        // TODO: إضافة سيارة جديدة (للمدير فقط)
-        return Ok(new { message = "Create car endpoint hit" });
+        var createdCar = await _carService.CreateAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = createdCar.Id }, createdCar);
     }
 
-    [HttpPut("{id}")]
-    public IActionResult UpdateCar(int id)
+    [HttpPut("{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateCarDto dto)
     {
-        // TODO: تعديل بيانات سيارة (للمدير فقط)
-        return Ok(new { message = $"Update car {id} endpoint hit" });
+        var updated = await _carService.UpdateAsync(id, dto);
+        if (!updated) return NotFound(new { Message = $"Car with ID {id} was not found." });
+
+        return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public IActionResult DeleteCar(int id)
+    [HttpDelete("{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> Delete(int id)
     {
-        // TODO: حذف أو إيقاف سيارة (للمدير فقط)
-        return Ok(new { message = $"Delete car {id} endpoint hit" });
+        var deleted = await _carService.DeleteAsync(id);
+        if (!deleted) return NotFound(new { Message = $"Car with ID {id} was not found." });
+
+        return NoContent();
     }
 }

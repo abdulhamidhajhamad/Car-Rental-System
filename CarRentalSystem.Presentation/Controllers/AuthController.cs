@@ -1,3 +1,5 @@
+using CarRentalSystem.Application.DTOs.Auth;
+using CarRentalSystem.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CarRentalSystem.Presentation.Controllers;
@@ -6,21 +8,50 @@ namespace CarRentalSystem.Presentation.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    [HttpPost("register")]
-    public IActionResult Register()
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService)
     {
-        return Ok(new { message = "Register endpoint hit" });
+        _authService = authService;
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    {
+        var result = await _authService.RegisterAsync(dto);
+        if (!result.IsSuccess)
+            return BadRequest(result);
+
+        return Ok(result);
     }
 
     [HttpPost("login")]
-    public IActionResult Login()
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        return Ok(new { message = "Login endpoint hit" });
+        var result = await _authService.LoginAsync(dto);
+        if (!result.IsSuccess)
+            return Unauthorized(result);
+
+        return Ok(result);
     }
 
-    [HttpPost("logout")]
-    public IActionResult Logout()
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
     {
-        return Ok(new { message = "Logout endpoint hit" });
+        var result = await _authService.ForgotPasswordAsync(dto);
+        if (!result)
+            return BadRequest(new { Message = "If the email exists, a reset link has been sent." });
+
+        return Ok(new { Message = "If the email exists, a reset link has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var result = await _authService.ResetPasswordAsync(dto);
+        if (!result)
+            return BadRequest(new { Message = "Invalid token or email." });
+
+        return Ok(new { Message = "Password reset successfully." });
     }
 }
