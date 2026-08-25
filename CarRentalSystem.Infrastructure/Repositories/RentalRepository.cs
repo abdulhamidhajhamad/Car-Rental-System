@@ -48,4 +48,12 @@ public class RentalRepository : IRentalRepository
         _context.Rentals.Update(rental);
         await _context.SaveChangesAsync();
     }
+    public async Task<bool> HasOverlapAsync(int carId, DateTime startDate, DateTime endDate)
+    {
+        return await _context.Rentals.AnyAsync(r =>
+            r.CarId == carId &&
+            !r.IsCompleted &&
+            r.StartDate < endDate &&
+            r.EndDate > startDate);
+    }
 }

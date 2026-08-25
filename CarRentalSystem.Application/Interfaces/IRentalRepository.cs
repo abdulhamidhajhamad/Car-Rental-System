@@ -9,4 +9,5 @@ public interface IRentalRepository
     Task<Rental?> GetByIdAsync(int id);
     Task AddAsync(Rental rental);
     Task UpdateAsync(Rental rental);
+    Task<bool> HasOverlapAsync(int carId, DateTime startDate, DateTime endDate);
 }

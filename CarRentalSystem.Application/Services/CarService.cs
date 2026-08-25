@@ -1,4 +1,5 @@
 using CarRentalSystem.Application.DTOs.Car;
+using CarRentalSystem.Application.Exceptions;
 using CarRentalSystem.Application.Interfaces;
 using CarRentalSystem.Domain.Entities;
 
@@ -28,7 +29,8 @@ public class CarService : ICarService
     public async Task<CarResponseDto?> GetByIdAsync(int id)
     {
         var car = await _carRepository.GetByIdAsync(id);
-        if (car == null) return null;
+        if (car == null)
+            throw new NotFoundException(nameof(Car), id);
 
         return new CarResponseDto(car.Id, car.Make, car.Model, car.Year, car.DailyRate, car.LicensePlate, car.IsAvailable);
     }
@@ -53,7 +55,8 @@ public class CarService : ICarService
     public async Task<bool> UpdateAsync(int id, UpdateCarDto dto)
     {
         var car = await _carRepository.GetByIdAsync(id);
-        if (car == null) return false;
+        if (car == null)
+            throw new NotFoundException(nameof(Car), id);
 
         car.Make = dto.Make;
         car.Model = dto.Model;
@@ -68,7 +71,8 @@ public class CarService : ICarService
     public async Task<bool> DeleteAsync(int id)
     {
         var car = await _carRepository.GetByIdAsync(id);
-        if (car == null) return false;
+        if (car == null)
+            throw new NotFoundException(nameof(Car), id);
 
         await _carRepository.DeleteAsync(car);
         return true;

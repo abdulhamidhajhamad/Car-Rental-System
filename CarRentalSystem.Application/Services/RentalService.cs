@@ -1,4 +1,5 @@
 using CarRentalSystem.Application.DTOs.Rental;
+using CarRentalSystem.Application.Exceptions;
 using CarRentalSystem.Application.Interfaces;
 using CarRentalSystem.Domain.Entities;
 
@@ -17,13 +18,22 @@ public class RentalService : IRentalService
 
     public async Task<RentalResponseDto> CreateRentalAsync(string userId, CreateRentalDto dto)
     {
-        if (dto.EndDate <= dto.StartDate)
-            throw new ArgumentException("End date must be after start date.");
+        // 1. تشغيل الـ Validator
+        var validationResult = await _validator.ValidateAsync(dto);
+        if (!validationResult.IsValid)
+            throw new ValidationException(validationResult.Errors);
 
+        // 2. التحقق من وجود السيارة
         var car = await _carRepository.GetByIdAsync(dto.CarId);
-        if (car == null || !car.IsAvailable)
-            throw new InvalidOperationException("The selected car is currently not available for booking.");
+        if (car == null)
+            throw new NotFoundException(nameof(Car), dto.CarId);
 
+        // 3. التحقق من تضارب التواريخ مع حجوزات سابقة
+        bool isOverlapping = await _rentalRepository.HasOverlapAsync(dto.CarId, dto.StartDate, dto.EndDate);
+        if (isOverlapping)
+            throw new BadRequestException("The selected car is already booked for the specified dates.");
+
+        // 4. إنشاء الحجز
         int rentalDays = (dto.EndDate - dto.StartDate).Days;
         if (rentalDays == 0) rentalDays = 1;
 
@@ -39,8 +49,6 @@ public class RentalService : IRentalService
             IsCompleted = false
         };
 
-        car.IsAvailable = false;
-        await _carRepository.UpdateAsync(car);
         await _rentalRepository.AddAsync(rental);
 
         return new RentalResponseDto(
@@ -72,10 +80,14 @@ public class RentalService : IRentalService
     public async Task<bool> CompleteRentalAsync(int rentalId)
     {
         var rental = await _rentalRepository.GetByIdAsync(rentalId);
-        if (rental == null || rental.IsCompleted) return false;
+        if (rental == null)
+            throw new NotFoundException(nameof(Rental), rentalId);
+
+        if (rental.IsCompleted)
+            throw new BadRequestException("This rental is already completed.");
 
         rental.IsCompleted = true;
-        
+
         var car = await _carRepository.GetByIdAsync(rental.CarId);
         if (car != null)
         {
