@@ -13,6 +13,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Car> Cars { get; set; }
     public DbSet<Rental> Rentals { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -31,7 +32,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.Property(c => c.Make).IsRequired().HasMaxLength(50);
             entity.Property(c => c.Model).IsRequired().HasMaxLength(50);
-            entity.Property(c => c.DailyRate).HasColumnType("decimal(18,2)");
+            entity.Property(c => c.LicensePlate).IsRequired().HasMaxLength(20);
+            entity.Property(c => c.DailyRate).HasPrecision(18, 2);
+        });
+
+        builder.Entity<Rental>(entity =>
+        {
+            entity.Property(r => r.TotalCost).HasPrecision(18, 2);
+
+            entity.HasOne(r => r.Car)
+                  .WithMany()
+                  .HasForeignKey(r => r.CarId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.User)
+                  .WithMany()
+                  .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
