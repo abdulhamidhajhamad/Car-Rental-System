@@ -1,0 +1,16 @@
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\bin\Debug\net10.0\CarRentalSystem.Application.deps.json
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\bin\Debug\net10.0\CarRentalSystem.Application.dll
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\bin\Debug\net10.0\CarRentalSystem.Application.pdb
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\bin\Debug\net10.0\CarRentalSystem.Domain.dll
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\bin\Debug\net10.0\CarRentalSystem.Domain.pdb
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\CarRentalSystem.Application.csproj.AssemblyReference.cache
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\CarRentalSystem.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\CarRentalSystem.Application.AssemblyInfoInputs.cache
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\CarRentalSystem.Application.AssemblyInfo.cs
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\CarRentalSystem.Application.csproj.CoreCompileInputs.cache
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\CarRentalSystem.Application.sourcelink.json
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\CarRenta.A2C43BBA.Up2Date
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\CarRentalSystem.Application.dll
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\refint\CarRentalSystem.Application.dll
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\CarRentalSystem.Application.pdb
+C:\Abd\traingCode\Car-Rental-System\CarRentalSystem.Application\obj\Debug\net10.0\ref\CarRentalSystem.Application.dll
