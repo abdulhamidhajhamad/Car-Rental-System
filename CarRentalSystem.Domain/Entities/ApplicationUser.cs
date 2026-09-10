@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace CarRental.Domain.Entities;
-
+namespace CarRentalSystem.Domain.Entities;
 public class ApplicationUser : IdentityUser
 {
     public string FirstName { get; set; } = string.Empty;

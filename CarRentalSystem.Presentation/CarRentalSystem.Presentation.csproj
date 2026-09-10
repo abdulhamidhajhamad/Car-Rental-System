@@ -7,11 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.11" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CarRentalSystem.Application\CarRentalSystem.Application.csproj" />
+    <ProjectReference Include="..\CarRentalSystem.Domain\CarRentalSystem.Domain.csproj" />
+    <ProjectReference Include="..\CarRentalSystem.Infrastructure\CarRentalSystem.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
