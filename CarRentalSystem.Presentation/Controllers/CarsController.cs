@@ -4,9 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CarRentalSystem.Presentation.Controllers;
-
-[Route("api/[controller]")]
 [ApiController]
+[Route("api/[controller]")]
 public class CarsController : ControllerBase
 {
     private readonly ICarService _carService;
@@ -16,54 +15,35 @@ public class CarsController : ControllerBase
         _carService = carService;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchCars([FromQuery] CarSearchDto searchDto)
     {
-        var cars = await _carService.GetAllAsync();
+        var cars = await _carService.SearchCarsAsync(searchDto);
         return Ok(cars);
     }
 
-    [HttpGet("available")]
-    public async Task<IActionResult> GetAvailable()
+    // متاح فقط للمستخدمين برول Admin
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> CreateCar([FromBody] CreateCarDto dto)
     {
-        var cars = await _carService.GetAvailableCarsAsync();
-        return Ok(cars);
-    }
-
-    [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var car = await _carService.GetByIdAsync(id);
-        if (car == null) return NotFound(new { Message = $"Car with ID {id} was not found." });
-
+        var car = await _carService.CreateCarAsync(dto);
         return Ok(car);
     }
 
-    [HttpPost]
-    [Authorize] 
-    public async Task<IActionResult> Create([FromBody] CreateCarDto dto)
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateCar(int id, [FromBody] UpdateCarDto dto)
     {
-        var createdCar = await _carService.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = createdCar.Id }, createdCar);
-    }
-
-    [HttpPut("{id:int}")]
-    [Authorize]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateCarDto dto)
-    {
-        var updated = await _carService.UpdateAsync(id, dto);
-        if (!updated) return NotFound(new { Message = $"Car with ID {id} was not found." });
-
+        await _carService.UpdateCarAsync(id, dto);
         return NoContent();
     }
 
-    [HttpDelete("{id:int}")]
-    [Authorize]
-    public async Task<IActionResult> Delete(int id)
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteCar(int id)
     {
-        var deleted = await _carService.DeleteAsync(id);
-        if (!deleted) return NotFound(new { Message = $"Car with ID {id} was not found." });
-
+        await _carService.DeleteCarAsync(id);
         return NoContent();
     }
 }

@@ -5,5 +5,6 @@ public record UpdateCarDto(
     string Model,
     int Year,
     decimal DailyRate,
+    string LicensePlate,
     bool IsAvailable
 );

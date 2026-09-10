@@ -35,7 +35,7 @@ public class CarService : ICarService
         return new CarResponseDto(car.Id, car.Make, car.Model, car.Year, car.DailyRate, car.LicensePlate, car.IsAvailable);
     }
 
-    public async Task<CarResponseDto> CreateAsync(CreateCarDto dto)
+    public async Task<CarResponseDto> CreateCarAsync(CreateCarDto dto)
     {
         var car = new Car
         {
@@ -52,7 +52,7 @@ public class CarService : ICarService
         return new CarResponseDto(car.Id, car.Make, car.Model, car.Year, car.DailyRate, car.LicensePlate, car.IsAvailable);
     }
 
-    public async Task<bool> UpdateAsync(int id, UpdateCarDto dto)
+    public async Task<bool> UpdateCarAsync(int id, UpdateCarDto dto)
     {
         var car = await _carRepository.GetByIdAsync(id);
         if (car == null)
@@ -68,7 +68,7 @@ public class CarService : ICarService
         return true;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteCarAsync(int id)
     {
         var car = await _carRepository.GetByIdAsync(id);
         if (car == null)
@@ -76,5 +76,19 @@ public class CarService : ICarService
 
         await _carRepository.DeleteAsync(car);
         return true;
+    }
+
+    public async Task<IEnumerable<CarResponseDto>> SearchCarsAsync(CarSearchDto searchDto)
+    {
+        if (searchDto.StartDate.HasValue && searchDto.EndDate.HasValue)
+        {
+            if (searchDto.EndDate <= searchDto.StartDate)
+                throw new BadRequestException("End date must be after start date.");
+        }
+
+        var cars = await _carRepository.SearchAvailableCarsAsync(searchDto);
+
+        return cars.Select(c => new CarResponseDto(
+            c.Id, c.Make, c.Model, c.Year, c.DailyRate, c.LicensePlate, c.IsAvailable));
     }
 }

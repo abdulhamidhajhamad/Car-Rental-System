@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using CarRentalSystem.Application.DTOs.Auth;
+using CarRentalSystem.Application.Exceptions;
 using CarRentalSystem.Application.Interfaces;
 using CarRentalSystem.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -13,42 +14,52 @@ namespace CarRentalSystem.Infrastructure.Identity;
 public class AuthService : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _configuration;
 
-    public AuthService(UserManager<ApplicationUser> userManager, IConfiguration configuration)
+    public AuthService(
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        IConfiguration configuration)
     {
         _userManager = userManager;
+        _roleManager = roleManager;
         _configuration = configuration;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
     {
-        var userExists = await _userManager.FindByEmailAsync(dto.Email);
-        if (userExists != null)
-        {
-            return new AuthResponseDto { IsSuccess = false, Message = "Email already registered." };
-        }
-
         var user = new ApplicationUser
         {
             UserName = dto.Email,
             Email = dto.Email,
             FirstName = dto.FirstName,
             LastName = dto.LastName,
+            PhoneNumber = dto.PhoneNumber,
             DriversLicenseNumber = dto.DriversLicenseNumber,
             AddressLine1 = dto.AddressLine1,
+            AddressLine2 = dto.AddressLine2,
             City = dto.City,
-            Country = dto.Country
+            Country = dto.Country,
+            DateOfBirth = dto.DateOfBirth
         };
 
         var result = await _userManager.CreateAsync(user, dto.Password);
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            return new AuthResponseDto { IsSuccess = false, Message = errors };
+            throw new BadRequestException(errors);
         }
 
-        return new AuthResponseDto { IsSuccess = true, Message = "User created successfully!", UserId = user.Id };
+        var roleName = string.IsNullOrWhiteSpace(dto.Role) ? "Customer" : dto.Role;
+        if (!await _roleManager.RoleExistsAsync(roleName))
+        {
+            await _roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+
+        await _userManager.AddToRoleAsync(user, roleName);
+
+        return await GenerateJwtTokenAsync(user);
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
@@ -56,68 +67,70 @@ public class AuthService : IAuthService
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
         {
-            return new AuthResponseDto { IsSuccess = false, Message = "Invalid email or password." };
+            throw new BadRequestException("Invalid email or password.");
         }
 
-        var token = await GenerateJwtTokenAsync(user);
-
-        return new AuthResponseDto 
-        { 
-            IsSuccess = true, 
-            Message = "Login successful!", 
-            UserId = user.Id,
-            Token = token 
-        };
+        return await GenerateJwtTokenAsync(user);
     }
 
     public async Task<bool> ForgotPasswordAsync(ForgotPasswordDto dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null) return false;
+        if (user == null)
+            return false;
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+        // TODO: ابعت الـ token عبر الإيميل هون (email service)
+
         return true;
     }
 
     public async Task<bool> ResetPasswordAsync(ResetPasswordDto dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null) return false;
+        if (user == null)
+            throw new NotFoundException(nameof(ApplicationUser), dto.Email);
 
         var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
-        return result.Succeeded;
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new BadRequestException($"Password reset failed: {errors}");
+        }
+
+        return true;
     }
 
-    private async Task<string> GenerateJwtTokenAsync(ApplicationUser user)
+    private async Task<AuthResponseDto> GenerateJwtTokenAsync(ApplicationUser user)
     {
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var key = Encoding.UTF8.GetBytes(jwtSettings["Secret"]!);
-
-        var claims = new List<Claim>
+        var authClaims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(ClaimTypes.Email, user.Email!),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Email, user.Email!),
+            new(ClaimTypes.GivenName, user.FirstName)
         };
 
         var userRoles = await _userManager.GetRolesAsync(user);
         foreach (var role in userRoles)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            authClaims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpiryInMinutes"]!)),
-            Issuer = jwtSettings["Issuer"],
-            Audience = jwtSettings["Audience"],
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
+        var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Secret"]!));
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
+        var token = new JwtSecurityToken(
+            issuer: _configuration["JwtSettings:Issuer"],
+            audience: _configuration["JwtSettings:Audience"],
+            expires: DateTime.UtcNow.AddHours(3),
+            claims: authClaims,
+            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+        );
 
-        return tokenHandler.WriteToken(token);
+        return new AuthResponseDto(
+            user.Id,
+            user.Email!,
+            new JwtSecurityTokenHandler().WriteToken(token)
+        );
     }
 }

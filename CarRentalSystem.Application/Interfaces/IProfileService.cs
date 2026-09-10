@@ -1,6 +1,9 @@
-namespace DefaultNamespace;
+using CarRentalSystem.Application.DTOs.Profile;
 
-public class IProfileService
+namespace CarRentalSystem.Application.Interfaces;
+
+public interface IProfileService
 {
-    
+    Task<UserProfileResponseDto> GetProfileAsync(string userId);
+    Task<UserProfileResponseDto> UpdateProfileAsync(string userId, UpdateProfileDto dto);
 }
